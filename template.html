@@ -1,0 +1,238 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>[论文简称] · 双栏批注</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1b2f4e;
+    --navy-2: #24406b;
+    --paper: #faf6ec;
+    --cn-bg: #f0ece2;
+    --rule: #cfc6b4;
+    --thesis: #fff0a0;
+    --concept: #ffd1d1;
+    --evid: #c9e2ff;
+    --concede: #cdf2d6;
+    --method: #e3d4ff;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 120px; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: #222;
+    font-family: "IBM Plex Sans", "Microsoft YaHei", "PingFang SC", sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ---------- top bar ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 20;
+    background: var(--navy); color: #fff;
+    padding: 12px 20px;
+  }
+  .topbar h1 { margin: 0; font-size: 17px; font-weight: 600; }
+  .topbar .course { margin-top: 2px; font-size: 12.5px; opacity: .85; }
+  .legend { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 12.5px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { display: inline-block; width: 14px; height: 14px; border-radius: 3px; }
+
+  .sectionnav {
+    position: sticky; top: 0; z-index: 19;
+    background: var(--navy-2); padding: 6px 20px; overflow-x: auto; white-space: nowrap;
+  }
+  .sectionnav a { color: #dfe7f5; text-decoration: none; margin-right: 18px; font-size: 13px; }
+  .sectionnav a:hover { color: #fff; text-decoration: underline; }
+
+  /* ---------- layout ---------- */
+  main { max-width: 1280px; margin: 0 auto; padding: 18px 20px 60px; }
+  .section-title {
+    margin: 34px 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--navy);
+    font-size: 18px; color: var(--navy); font-weight: 600;
+  }
+  .colhead {
+    display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 24px;
+    font-size: 12px; color: #6a6a6a; letter-spacing: .04em; margin-bottom: 4px;
+  }
+  .row {
+    display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 24px;
+    padding: 18px 0; border-bottom: 1px dashed var(--rule);
+  }
+
+  /* ---------- left column: EN + CN ---------- */
+  .en {
+    font-family: "Lora", Georgia, "Noto Serif SC", serif;
+    font-size: 16px; line-height: 1.75; color: #1d1d1d;
+  }
+  .en .tag { font-family: "IBM Plex Sans", sans-serif; font-size: 11.5px; color: #7a6a4a; text-transform: uppercase; letter-spacing: .06em; display: block; margin-bottom: 4px; }
+  .divider { height: 0; border-top: 1px solid var(--rule); margin: 12px 0; }
+  .cn {
+    background: var(--cn-bg);
+    border-left: 2px solid #b09a6a;
+    padding: 10px 14px;
+    font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", SimSun, serif;
+    font-size: 14.5px; line-height: 1.85; color: #2b2b2b;
+    border-radius: 0 4px 4px 0;
+  }
+  .cn .tag { font-family: "IBM Plex Sans", sans-serif; font-size: 11.5px; color: #8a7a55; display: block; margin-bottom: 2px; }
+
+  /* highlight classes (five dimensions) */
+  .hl-t { background: var(--thesis); padding: 0 2px; border-radius: 2px; }   /* 黄：核心论点 */
+  .hl-k { background: var(--concept); padding: 0 2px; border-radius: 2px; }  /* 红：关键概念/估计量 */
+  .hl-e { background: var(--evid); padding: 0 2px; border-radius: 2px; }     /* 蓝：效应估计与数据 */
+  .hl-c { background: var(--concede); padding: 0 2px; border-radius: 2px; }  /* 绿：偏倚/局限/让步 */
+  .hl-m { background: var(--method); padding: 0 2px; border-radius: 2px; }   /* 紫：研究设计与方法 */
+
+  /* ---------- right column: annotation card ---------- */
+  .card {
+    background: #fff; border-left: 4px solid #999; border-radius: 6px;
+    padding: 12px 14px; font-size: 13.5px; line-height: 1.7; color: #262626;
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
+    align-self: start;
+  }
+  .card dl { margin: 0; }
+  .card dt { font-weight: 600; color: #333; margin-top: 8px; font-size: 12.5px; }
+  .card dt:first-child { margin-top: 0; }
+  .card dd { margin: 2px 0 0 0; }
+  .card .quote { color: #555; font-style: italic; }
+  .card.c-thesis { border-left-color: #d9b400; background: #fffdf3; }
+  .card.c-concept { border-left-color: #d96262; background: #fff8f8; }
+  .card.c-evid { border-left-color: #4f86c6; background: #f6faff; }
+  .card.c-concede { border-left-color: #3e9b5c; background: #f5fcf7; }
+  .card.c-method { border-left-color: #8a63c4; background: #fbf8ff; }
+
+  /* ---------- bottom overview ---------- */
+  .overview { margin-top: 10px; }
+  .ov-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
+  .ov-card {
+    background: #fff; border: 1px solid var(--rule); border-radius: 8px; padding: 16px 18px;
+  }
+  .ov-card h3 { margin: 0 0 8px; font-size: 15px; color: var(--navy); }
+  .ov-card p, .ov-card li { font-size: 14px; line-height: 1.75; }
+  .ov-card ol { margin: 0; padding-left: 20px; }
+  .ov-card.full { grid-column: 1 / -1; }
+  .ov-thesis { font-family: "Lora", Georgia, serif; font-size: 16px; }
+  .ov-strong { border-left: 4px solid #3e9b5c; }
+  .ov-weak { border-left: 4px solid #d96262; }
+  .scope {
+    margin: 0 0 14px; padding: 10px 14px; background: #fff; border: 1px solid var(--rule);
+    border-radius: 6px; font-size: 13px; color: #555;
+  }
+
+  @media (max-width: 900px) {
+    .colhead { display: none; }
+    .row { grid-template-columns: 1fr; gap: 12px; }
+    .ov-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- figures & tables ---------- */
+  .fig { display: block; width: 100%; height: auto; background: #fff; border: 1px solid var(--rule); border-radius: 4px; }
+  .cap { font-family: "Lora", Georgia, serif; font-size: 13.5px; line-height: 1.6; color: #444; margin-top: 10px; }
+  .row.wide { grid-template-columns: 1fr; }
+  .row.wide .card { max-width: 100%; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <h1>[Full English title of the paper]</h1>
+  <div class="course">[中文译名] · [First author et al.] · [Journal Year;Vol:Article] · 课程：[课程名，没有就写"文献批注"]</div>
+  <div class="legend">
+    <span><i style="background:var(--thesis)"></i>黄：核心论点 / 结论</span>
+    <span><i style="background:var(--concept)"></i>红：关键概念 / 估计量</span>
+    <span><i style="background:var(--evid)"></i>蓝：效应估计与数据</span>
+    <span><i style="background:var(--concede)"></i>绿：偏倚 / 局限 / 让步</span>
+    <span><i style="background:var(--method)"></i>紫：研究设计与方法</span>
+  </div>
+</header>
+
+<nav class="sectionnav">
+  <a href="#abstract">摘要</a>
+  <a href="#intro">引言</a>
+  <a href="#methods">方法</a>
+  <a href="#results">结果</a>
+  <a href="#figures">图表</a>
+  <a href="#discussion">讨论</a>
+  <a href="#conclusion">结论</a>
+  <a href="#overview">论证结构总览</a>
+</nav>
+
+<main>
+
+<!-- ============================ EXAMPLE SECTION (copy per paper section) ============================ -->
+<h2 class="section-title" id="abstract">摘要（Abstract）</h2>
+<div class="colhead"><div>英文原文 · 中文译文</div><div>批注</div></div>
+
+<!-- One row per paragraph. Put <span class="hl-*"> around key phrases in the English text only. -->
+<section class="row">
+  <div class="en">
+    <span class="tag">A1 · [段落功能简称]</span>
+    [Original English paragraph. Wrap the thesis in <span class="hl-t">…</span>, key terms in <span class="hl-k">…</span>, numbers and estimates in <span class="hl-e">…</span>, concessions or limitations in <span class="hl-c">…</span>, methods statements in <span class="hl-m">…</span>.]
+    <div class="divider"></div>
+    <div class="cn"><span class="tag">译文</span>[意译中文译文；译文不加颜色高亮。]</div>
+  </div>
+  <div class="card c-evid">
+    <dl>
+      <dt>段落功能</dt><dd>[这一段在做什么。]</dd>
+      <dt>逻辑角色</dt><dd>[它在论证链条中承担什么角色：论点 / 证据 / 让步 / 方法 / 结论。]</dd>
+      <dt>技巧 / 漏洞</dt><dd>[具体的论证技巧，或具体的漏洞：指出是哪个数字、哪个假设。没有就不要硬写。]</dd>
+    </dl>
+  </div>
+</section>
+
+<!-- Figure or table row: image on the left (base64 data URI), card on the right.
+     Very wide images (wide tables, forest plots) get class "row wide" so the card drops below. -->
+<section class="row wide">
+  <div class="en">
+    <span class="tag">表 1 · [short title]</span>
+    <img class="fig" src="data:image/png;base64,[...]" alt="[alt text]">
+    <div class="cap">[Original caption in English.]</div>
+    <div class="divider"></div>
+    <div class="cn"><span class="tag">译文</span>[图注中文译文。]</div>
+  </div>
+  <div class="card c-method">
+    <dl>
+      <dt>段落功能</dt><dd>[…]</dd>
+      <dt>读图方法</dt><dd>[坐标轴方向、颜色含义、各列的含义。]</dd>
+      <dt>技巧 / 漏洞</dt><dd>[…]</dd>
+    </dl>
+  </div>
+</section>
+
+<!-- ============================ BOTTOM OVERVIEW ============================ -->
+<h2 class="section-title" id="overview">底部：论证结构总览</h2>
+<div class="overview">
+  <div class="ov-grid">
+    <div class="ov-card full">
+      <h3>全文逻辑骨架（问题 → 论点 → 证据 → 反驳 → 结论）</h3>
+      <ol>
+        <li><strong>问题：</strong>[…]</li>
+        <li><strong>论点：</strong>[…]</li>
+        <li><strong>证据：</strong>[…]</li>
+        <li><strong>反驳：</strong>[…]</li>
+        <li><strong>结论：</strong>[…]</li>
+      </ol>
+    </div>
+    <div class="ov-card full">
+      <h3>作者核心主张（一句话版）</h3>
+      <p class="ov-thesis">[…]</p>
+    </div>
+    <div class="ov-card ov-strong">
+      <h3>最强处（一条）</h3>
+      <p>[…]</p>
+    </div>
+    <div class="ov-card ov-weak">
+      <h3>最弱处（一条）</h3>
+      <p>[…]</p>
+    </div>
+  </div>
+</div>
+</main>
+</body>
+</html>
